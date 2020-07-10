@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const dotenv = require("dotenv");
 const morgan = require("morgan");
 const exphbs = require("express-handlebars");
+const { formatDate, stripTags, truncate, editIcon } = require("./helpers/hbs");
 const passport = require("passport");
 const session = require("express-session");
 const MongoStore = require("connect-mongo")(session);
@@ -29,7 +30,14 @@ if (process.env.NODE_ENV === "development") {
 }
 
 // Handlebars
-app.engine(".hbs", exphbs({ defaultLayout: "main", extname: ".hbs" }));
+app.engine(
+	".hbs",
+	exphbs({
+		helpers: { formatDate, truncate, stripTags, editIcon },
+		defaultLayout: "main",
+		extname: ".hbs",
+	})
+);
 app.set("view engine", ".hbs");
 
 // Static folder
@@ -48,6 +56,12 @@ app.use(
 // Passport middleware
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Set global vars
+app.use(function (req, res, next) {
+	res.locals.user = req.user || null;
+	next();
+});
 
 // Routes
 app.use("/", require("./routes"));
